@@ -1,0 +1,73 @@
+#!/usr/bin/env ruby
+
+require 'cinch'
+require 'voyagerbot'
+
+target_network  = ENV["VOYAGER_TARGET_NETWORK"]
+target_channel  = ENV["VOYAGER_TARGET_CHANNEL"]
+control_network = ENV["VOYAGER_CONTROL_NETWORK"]
+control_channel = ENV["VOYAGER_CONTROL_CHANNEL"]
+
+target_nick     = ENV["VOYAGER_TARGET_NICK"]
+control_nick    = ENV["VOYAGER_CONTROL_NICK"]
+
+class BridgeBot < Cinch::Bot
+  attr_accessor :friend
+
+  def initialize()
+    super
+    @friend = nil
+  end
+end
+
+# TARGET TO PROBE
+botA = BridgeBot.new do
+  configure do |c|
+    c.nick = target_nick
+    c.user = 'vger'
+    c.server = target_network
+    c.channels = [target_channel,]
+    c.plugins.plugins = [VoyagerIngress, Cinch::Plugins::BasicCTCP]
+
+    c.plugins.options[VoyagerIngress] = {
+      :reply_to => control_channel,
+    }
+
+    # send custom CTCP VERSION response, aka stealth-mode
+    c.plugins.options[Cinch::Plugins::BasicCTCP][:replies] = {
+      :version  => "mIRC v6.35 Khaled Mardam-Bey",
+    }
+    c.plugins.options[Cinch::Plugins::BasicCTCP][:commands] = [:version, :time, :ping,]
+  end
+end
+
+# CONTROL CHANNEL
+botB = BridgeBot.new do
+  configure do |c|
+    c.nick = control_nick
+    c.user = 'vger_'
+    c.server = control_network
+    c.channels = [control_channel,]
+    c.plugins.plugins = [VoyagerReply, Cinch::Plugins::BasicCTCP]
+
+    c.plugins.options[VoyagerReply] = {
+      :reply_to => target_channel,
+    }
+
+    # send custom CTCP VERSION response, aka stealth-mode
+    c.plugins.options[Cinch::Plugins::BasicCTCP][:replies] = {
+      :version  => "mIRC v6.35 Khaled Mardam-Bey",
+    }
+    c.plugins.options[Cinch::Plugins::BasicCTCP][:commands] = [:version, :time, :ping,]
+  end
+end
+
+botA.loggers.level = :log
+botB.loggers.level = :log
+
+botA.friend = botB
+botB.friend = botA
+
+t1 = Thread.new { botA.start }
+botB.start
+t1.join
