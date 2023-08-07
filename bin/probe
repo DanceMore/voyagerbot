@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 
-require 'cinch'
+require 'ircinch'
 require 'voyagerbot'
 
 target_network  = ENV["VOYAGER_TARGET_NETWORK"]

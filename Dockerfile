@@ -1,4 +1,4 @@
-FROM debian:10
+FROM debian:bookworm
 
 # updates
 RUN apt -y update
