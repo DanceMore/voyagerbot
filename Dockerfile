@@ -1,20 +1,21 @@
-FROM debian:bookworm
+FROM debian:bookworm-slim
+MAINTAINER rk <dancemore@dancemore.xyz>
 
-# updates
+# apt updates
 RUN apt -y update
 RUN apt -y upgrade
 
 # ruby and development tools
-RUN apt -y install ruby
-RUN gem install bundle
+RUN apt -y install ruby bundler git
 
-# user
+# user account
 RUN adduser --disabled-password --home=/app --gecos "" app
 
-RUN apt -y install git
-
+# add the code
 ADD . /app
 RUN chown -R app:app /app
+
+# build it
 RUN su - app -c 'bundle install --path=vendor/bundle'
 
 # engage!
