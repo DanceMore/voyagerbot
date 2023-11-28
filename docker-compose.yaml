@@ -1,0 +1,19 @@
+version: '2.4'
+services:
+  ircd:
+    #image: linuxserver/ngircd
+    image: inspircd/inspircd-docker
+    ports:
+      - "6667:6667"
+
+  probe:
+    image: ghcr.io/dancemore/dancemore/voyagerbot:latest
+    environment:
+      - VOYAGER_TARGET_NETWORK=ircd
+      - VOYAGER_TARGET_CHANNEL=#target
+      - VOYAGER_CONTROL_NETWORK=ircd
+      - VOYAGER_CONTROL_CHANNEL=#control
+      - VOYAGER_TARGET_NICK=vger
+      - VOYAGER_CONTROL_NICK=controlme
+    depends_on:
+      - ircd
